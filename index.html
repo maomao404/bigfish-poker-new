@@ -201,28 +201,14 @@
 
         /* 图表容器样式 */
         .chart-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 24px;
-            margin: 20px auto;
-            max-width: 800px;
+            position: relative;
+            height: 300px;
+            width: 100%;
+            margin: 20px 0;
         }
 
-        .chart-wrapper {
-            width: 100%;
-            max-width: 500px;
-            height: 300px;
-            margin: 0 auto;
-            padding: 16px;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: var(--color-canvas-default);
-            border: 1px solid var(--color-border-default);
-            border-radius: 6px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        #handTypeChart {
+            background-color: white;
         }
 
         /* 底池赔率计算器样式 */
@@ -395,7 +381,7 @@
                 min-width: 60px;
             }
 
-            .chart-wrapper {
+            .chart-container {
                 height: 250px;
                 padding: 12px;
             }
@@ -561,6 +547,68 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        .history-container {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: var(--color-canvas-subtle);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            margin-bottom: 10px;
+            padding: 12px;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .history-time {
+            color: var(--color-fg-muted);
+            font-size: 0.9em;
+        }
+
+        .history-equity {
+            font-weight: bold;
+            color: var(--color-accent-fg);
+        }
+
+        .history-cards {
+            margin-bottom: 8px;
+        }
+
+        .hole-cards, .board-cards {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .history-actions button {
+            padding: 4px 8px;
+            font-size: 0.9em;
+        }
+
+        .chart-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        #handTypeChart {
+            width: 100% !important;
+            height: 100% !important;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -700,7 +748,7 @@
 
         <!-- 在公共牌选择区域后添加胜率计算按钮和结果显示 -->
         <div class="action-buttons">
-            <button id="calculateButton" class="primary-button" onclick="calculateEquity()">计算胜率</button>
+            <button id="calculateButton" class="primary-button" onclick="calculateAndUpdateEquity()">计算胜率</button>
             <button id="clearButton" class="secondary-button" onclick="clearCards()">清空选择</button>
         </div>
     </div>
@@ -713,33 +761,33 @@
         
         <div class="win-rate">
             <div class="win-rate-circle">
-                <span id="mainWinRate">75%</span>
+                <span id="mainWinRate">0%</span>
             </div>
             <div class="win-rate-details">
                 <div class="stat-item">
                     <span class="stat-label">胜率</span>
                     <div style="flex: 1;">
-                        <span class="stat-value positive">75%</span>
+                        <span class="stat-value positive">0%</span>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 75%"></div>
+                            <div class="progress-fill" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">平局概率</span>
                     <div style="flex: 1;">
-                        <span class="stat-value">5%</span>
+                        <span class="stat-value">0%</span>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 5%"></div>
+                            <div class="progress-fill" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">失败概率</span>
                     <div style="flex: 1;">
-                        <span class="stat-value negative">20%</span>
+                        <span class="stat-value negative">100%</span>
                         <div class="progress-bar">
-                            <div class="progress-fill" style="width: 20%; background: var(--color-danger-fg)"></div>
+                            <div class="progress-fill" style="width: 100%; background: var(--color-danger-fg)"></div>
                         </div>
                     </div>
                 </div>
@@ -748,7 +796,7 @@
 
         <div class="stat-item">
             <span class="stat-label">建议操作</span>
-            <span class="stat-value" id="suggestion">建议跟注，当前胜率较高</span>
+            <span class="stat-value" id="suggestion">请选择手牌</span>
         </div>
     </div>
 
@@ -849,11 +897,8 @@
         <div class="section-header">
             <h3>牌型分布统计</h3>
         </div>
-        
-        <div class="chart-container">
-            <div class="chart-wrapper">
-                <canvas id="handTypeChart"></canvas>
-            </div>
+        <div class="chart-container" style="position: relative; height:300px; width:100%">
+            <canvas id="handTypeChart"></canvas>
         </div>
     </div>
 
@@ -951,7 +996,215 @@
         </div>
     </div>
 
+    <div class="calculator-section">
+        <div class="section-header">
+            <h3>历史记录</h3>
+        </div>
+        
+        <div class="history-container">
+            <div class="history-list" id="historyList">
+                <!-- 历史记录将在这里动态显示 -->
+            </div>
+        </div>
+    </div>
+
     <script>
+        // 预设的起始手牌胜率表（169种组合）
+        const startingHandEquity = {
+            // 口袋对
+            'AA': 85.2, 'KK': 82.4, 'QQ': 79.9, 'JJ': 77.5,
+            'TT': 75.1, '99': 72.1, '88': 69.1, '77': 66.2,
+            '66': 63.3, '55': 60.3, '44': 57.4, '33': 54.6, '22': 51.7,
+            
+            // AK - A2
+            'AKs': 67.0, 'AQs': 66.1, 'AJs': 65.1, 'ATs': 64.1,
+            'A9s': 62.8, 'A8s': 61.8, 'A7s': 60.9, 'A6s': 59.9,
+            'A5s': 60.5, 'A4s': 59.5, 'A3s': 58.5, 'A2s': 57.6,
+            
+            'AKo': 65.4, 'AQo': 64.5, 'AJo': 63.5, 'ATo': 62.5,
+            'A9o': 60.9, 'A8o': 59.9, 'A7o': 59.0, 'A6o': 58.0,
+            'A5o': 58.6, 'A4o': 57.6, 'A3o': 56.6, 'A2o': 55.7,
+            
+            // KQ - K2
+            'KQs': 63.4, 'KJs': 62.5, 'KTs': 61.6,
+            'K9s': 59.9, 'K8s': 58.7, 'K7s': 57.8,
+            'K6s': 56.9, 'K5s': 56.0, 'K4s': 55.1,
+            'K3s': 54.2, 'K2s': 53.3,
+            
+            'KQo': 61.8, 'KJo': 60.9, 'KTo': 60.0,
+            'K9o': 58.0, 'K8o': 56.8, 'K7o': 55.9,
+            'K6o': 55.0, 'K5o': 54.1, 'K4o': 53.2,
+            'K3o': 52.3, 'K2o': 51.4,
+            
+            // QJ - Q2
+            'QJs': 60.3, 'QTs': 59.4, 'Q9s': 57.7,
+            'Q8s': 56.5, 'Q7s': 55.3, 'Q6s': 54.4,
+            'Q5s': 53.5, 'Q4s': 52.6, 'Q3s': 51.7,
+            'Q2s': 50.8,
+            
+            'QJo': 58.7, 'QTo': 57.8, 'Q9o': 55.8,
+            'Q8o': 54.6, 'Q7o': 53.4, 'Q6o': 52.5,
+            'Q5o': 51.6, 'Q4o': 50.7, 'Q3o': 49.8,
+            'Q2o': 48.9,
+            
+            // 连牌
+            'JTs': 57.5, 'T9s': 55.6, '98s': 53.8,
+            '87s': 51.9, '76s': 50.0, '65s': 48.1,
+            '54s': 46.2, '43s': 44.3, '32s': 42.4,
+            
+            'JTo': 55.9, 'T9o': 54.0, '98o': 52.2,
+            '87o': 50.3, '76o': 48.4, '65o': 46.5,
+            '54o': 44.6, '43o': 42.7, '32o': 40.8
+        };
+
+        // 计算手牌强度
+        function calculateHandStrength(hand) {
+            // 获取起始手牌代码
+            const handCode = getStartingHandCode(hand.hand[0], hand.hand[1]);
+            let equity = startingHandEquity[handCode] || 45.0;
+
+            // 如果有公共牌，调整胜率
+            if (hand.board.length > 0) {
+                equity = adjustEquityWithBoard(hand);
+            }
+
+            console.log('Hand code:', handCode, 'Equity:', equity); // 调试日志
+            return Math.round(equity);
+        }
+
+        // 根据公共牌调整胜率
+        function adjustEquityWithBoard(hand) {
+            let equity = 50;
+            const handRanking = evaluateHand([...hand.hand, ...hand.board]);
+            
+            switch(handRanking) {
+                case 'straightFlush': equity = 95; break;
+                case 'fourOfAKind': equity = 90; break;
+                case 'fullHouse': equity = 85; break;
+                case 'flush': equity = 80; break;
+                case 'straight': equity = 75; break;
+                case 'threeOfAKind': equity = 70; break;
+                case 'twoPair': equity = 65; break;
+                case 'pair': equity = 60; break;
+                default: equity = 45;
+            }
+
+            // 根据公共牌数量调整
+            const boardCount = hand.board.length;
+            if (boardCount === 3) equity *= 0.95;
+            if (boardCount === 4) equity *= 0.9;
+            if (boardCount === 5) equity *= 0.85;
+
+            return equity;
+        }
+
+        // 评估牌型
+        function evaluateHand(cards) {
+            // 统计点数和花色
+            const rankCount = {};
+            const suitCount = {};
+            
+            cards.forEach(card => {
+                rankCount[card.rank] = (rankCount[card.rank] || 0) + 1;
+                suitCount[card.suit] = (suitCount[card.suit] || 0) + 1;
+            });
+
+            // 检查各种牌型
+            if (hasStraightFlush(cards)) return 'straightFlush';
+            if (hasFourOfAKind(rankCount)) return 'fourOfAKind';
+            if (hasFullHouse(rankCount)) return 'fullHouse';
+            if (hasFlush(suitCount)) return 'flush';
+            if (hasStraight(cards)) return 'straight';
+            if (hasThreeOfAKind(rankCount)) return 'threeOfAKind';
+            if (hasTwoPair(rankCount)) return 'twoPair';
+            if (hasPair(rankCount)) return 'pair';
+            return 'highCard';
+        }
+
+        // 各种牌型检查函数
+        function hasStraightFlush(cards) {
+            return hasFlush({[cards[0].suit]: 5}) && hasStraight(cards);
+        }
+
+        function hasFourOfAKind(rankCount) {
+            return Object.values(rankCount).some(count => count === 4);
+        }
+
+        function hasFullHouse(rankCount) {
+            const counts = Object.values(rankCount);
+            return counts.includes(3) && counts.includes(2);
+        }
+
+        function hasFlush(suitCount) {
+            return Object.values(suitCount).some(count => count >= 5);
+        }
+
+        function hasStraight(cards) {
+            const ranks = 'A23456789TJQKA';
+            const distinctRanks = [...new Set(cards.map(c => c.rank))].sort(
+                (a, b) => ranks.indexOf(a) - ranks.indexOf(b)
+            );
+            for (let i = 0; i <= distinctRanks.length - 5; i++) {
+                const straight = distinctRanks.slice(i, i + 5);
+                const straightStr = straight.join('');
+                if (ranks.includes(straightStr)) return true;
+            }
+            return false;
+        }
+
+        function hasThreeOfAKind(rankCount) {
+            return Object.values(rankCount).some(count => count === 3);
+        }
+
+        function hasTwoPair(rankCount) {
+            return Object.values(rankCount).filter(count => count === 2).length >= 2;
+        }
+
+        function hasPair(rankCount) {
+            return Object.values(rankCount).some(count => count === 2);
+        }
+
+        // 获取起始手牌代码
+        function getStartingHandCode(card1, card2) {
+            const ranks = 'AKQJT98765432';
+            const rank1 = card1.rank;
+            const rank2 = card2.rank;
+            const suited = card1.suit === card2.suit ? 's' : 'o';
+            
+            // 对子
+            if (rank1 === rank2) return rank1 + rank1;
+            
+            // 非对子
+            const [highRank, lowRank] = ranks.indexOf(rank1) <= ranks.indexOf(rank2) 
+                ? [rank1, rank2] 
+                : [rank2, rank1];
+                
+            return highRank + lowRank + suited;
+        }
+
+        // 添加到原有的事件监听器中
+        function addCardSelectionListeners() {
+            const selectors = [
+                'card1Rank', 'card1Suit', 'card2Rank', 'card2Suit',
+                'flop1Rank', 'flop1Suit', 'flop2Rank', 'flop2Suit',
+                'flop3Rank', 'flop3Suit', 'turnRank', 'turnSuit',
+                'riverRank', 'riverSuit'
+            ];
+            
+            selectors.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('change', () => {
+                        const hand = getSelectedCards();
+                        if (validateCardSelection(hand)) {
+                            const equity = calculateHandStrength(hand);
+                            updateWinRate(equity);
+                        }
+                    });
+                }
+            });
+        }
+
         // 底池赔率计算
         function calculatePotOdds() {
             const potSize = parseFloat(document.getElementById('potSize').value) || 0;
@@ -1039,49 +1292,154 @@
             }
         }
 
-        // 牌型分布图表初始化
-        let handTypeChart;
-        function initHandTypeChart() {
-            const ctx = document.getElementById('handTypeChart').getContext('2d');
-            handTypeChart = new Chart(ctx, {
-                type: 'doughnut',
+        // 初始化图表
+        let myChart = null;
+
+        function createChart() {
+            const ctx = document.getElementById('handTypeChart');
+            
+            // 如果已存在图表，先销毁
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
                 data: {
-                    labels: ['高牌', '对子', '两对', '三条', '顺子', '同花', '葫芦', '四条', '同花顺'],
+                    labels: ['高牌', '一对', '两对', '三条', '顺子', '同花', '葫芦', '四条', '同花顺'],
                     datasets: [{
-                        data: [30, 25, 15, 10, 8, 5, 4, 2, 1],
+                        data: [50, 42.3, 4.75, 2.11, 0.392, 0.197, 0.144, 0.024, 0.00139],
                         backgroundColor: [
-                            '#0969da', '#1a7f37', '#cf222e', '#bf8700',
-                            '#6639ba', '#ae2c00', '#1b7c83', '#8250df', '#57606a'
+                            '#FF6384',
+                            '#36A2EB',
+                            '#FFCE56',
+                            '#4BC0C0',
+                            '#9966FF',
+                            '#FF9F40',
+                            '#36A2EB',
+                            '#4BC0C0',
+                            '#9966FF'
                         ]
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
                     plugins: {
-                        title: {
-                            display: true,
-                            text: '牌型分布',
-                            font: {
-                                size: 14
-                            }
-                        },
                         legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 12,
-                                padding: 10,
-                                font: {
-                                    size: 11
-                                }
-                            }
+                            display: false
                         }
                     }
                 }
             });
         }
 
-        // 初始化所有牌选择器
+        // 修改初始化显示
+        function initializeDisplay() {
+            // 设置初始胜率为 0%
+            document.getElementById('mainWinRate').textContent = '0%';
+            
+            // 设置进度条为 0
+            const progressBars = document.querySelectorAll('.progress-fill');
+            if (progressBars.length >= 3) {
+                progressBars[0].style.width = '0%';
+                progressBars[1].style.width = '0%';
+                progressBars[2].style.width = '100%';
+            }
+            
+            // 设置初始建议
+            document.getElementById('suggestion').textContent = '请选择手牌';
+            
+            // 设置详细统计的初始值
+            const statValues = document.querySelectorAll('.win-rate-details .stat-value');
+            if (statValues.length >= 3) {
+                statValues[0].textContent = '0%';
+                statValues[1].textContent = '0%';
+                statValues[2].textContent = '100%';
+            }
+        }
+
+        // 修改页面加载函数
+        window.onload = function() {
+            // 初始化选择器
+            initializeCardSelectors();
+            
+            // 初始化显示
+            initializeDisplay();
+            
+            // 创建图表
+            createChart();
+            
+            // 更新时间
+            const now = new Date();
+            document.getElementById('updateTime').textContent = now.toLocaleTimeString('zh-CN');
+        };
+
+        // 修改验证函数
+        function validateCardSelection(hand) {
+            // 如果没有选择手牌，返回 false
+            if (!hand.hand[0].rank || !hand.hand[0].suit || 
+                !hand.hand[1].rank || !hand.hand[1].suit) {
+                return false;
+            }
+
+            // 收集所有已选择的牌
+            const selectedCards = [];
+            
+            // 添加手牌
+            selectedCards.push(hand.hand[0].rank + hand.hand[0].suit);
+            selectedCards.push(hand.hand[1].rank + hand.hand[1].suit);
+            
+            // 添加公共牌
+            hand.board.forEach(card => {
+                if (card.rank && card.suit) {
+                    selectedCards.push(card.rank + card.suit);
+                }
+            });
+
+            // 检查重复
+            const uniqueCards = new Set(selectedCards);
+            return uniqueCards.size === selectedCards.length;
+        }
+
+        // 修改计算函数
+        function calculateAndUpdateEquity() {
+            const hand = getSelectedCards();
+            console.log('Selected cards:', hand);
+            
+            // 检查是否有手牌
+            if (!hand.hand[0].rank || !hand.hand[0].suit || 
+                !hand.hand[1].rank || !hand.hand[1].suit) {
+                console.log('No hole cards selected');
+                document.getElementById('suggestion').textContent = '请选择手牌';
+                return;
+            }
+
+            // 验证选择的牌
+            if (!validateCardSelection(hand)) {
+                console.log('Invalid card selection');
+                document.getElementById('suggestion').textContent = '选择的牌有重复';
+                return;
+            }
+
+            // 计算胜率
+            const equity = calculateHandStrength(hand);
+            console.log('Calculated equity:', equity);
+            
+            // 更新显示
+            updateWinRate(equity);
+            updateDetailedStats(hand);
+            updateChart([equity]);
+            saveToHistory(hand, equity);
+        }
+
+        // 修改选择器事件监听
         function initializeCardSelectors() {
             const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
             const suits = [
@@ -1091,61 +1449,64 @@
                 {value: 'c', text: '♣'}
             ];
 
-            // 所有需要初始化的选择器
-            const rankSelectors = [
-                'flop1Rank', 'flop2Rank', 'flop3Rank',
-                'turnRank', 'riverRank'
-            ];
-
-            const suitSelectors = [
-                'flop1Suit', 'flop2Suit', 'flop3Suit',
-                'turnSuit', 'riverSuit'
-            ];
+            // 所有选择器
+            const allSelectors = {
+                rank: [
+                    'card1Rank', 'card2Rank',
+                    'flop1Rank', 'flop2Rank', 'flop3Rank',
+                    'turnRank', 'riverRank'
+                ],
+                suit: [
+                    'card1Suit', 'card2Suit',
+                    'flop1Suit', 'flop2Suit', 'flop3Suit',
+                    'turnSuit', 'riverSuit'
+                ]
+            };
 
             // 初始化点数选择器
-            rankSelectors.forEach(id => {
+            allSelectors.rank.forEach(id => {
                 const select = document.getElementById(id);
-                ranks.forEach(rank => {
-                    const option = document.createElement('option');
-                    option.value = rank;
-                    option.text = rank === 'T' ? '10' : rank;
-                    select.appendChild(option);
-                });
+                if (select) {
+                    select.innerHTML = '<option value="">点数</option>';
+                    ranks.forEach(rank => {
+                        const option = document.createElement('option');
+                        option.value = rank;
+                        option.text = rank === 'T' ? '10' : rank;
+                        select.appendChild(option);
+                    });
+                    
+                    // 添加事件监听器
+                    select.addEventListener('change', function() {
+                        console.log(`${id} changed to ${this.value}`);
+                        calculateAndUpdateEquity();
+                    });
+                }
             });
 
             // 初始化花色选择器
-            suitSelectors.forEach(id => {
+            allSelectors.suit.forEach(id => {
                 const select = document.getElementById(id);
-                suits.forEach(suit => {
-                    const option = document.createElement('option');
-                    option.value = suit.value;
-                    option.text = suit.text;
-                    select.appendChild(option);
-                });
+                if (select) {
+                    select.innerHTML = '<option value="">花色</option>';
+                    suits.forEach(suit => {
+                        const option = document.createElement('option');
+                        option.value = suit.value;
+                        option.text = suit.text;
+                        select.appendChild(option);
+                    });
+                    
+                    // 添加事件监听器
+                    select.addEventListener('change', function() {
+                        console.log(`${id} changed to ${this.value}`);
+                        calculateAndUpdateEquity();
+                    });
+                }
             });
-        }
-
-        // 胜率计算函数
-        function calculateEquity() {
-            // 获取所有选择的牌
-            const hand = getSelectedCards();
-            
-            // 验证选择
-            if (!validateCardSelection(hand)) {
-                alert('请选择有效的手牌');
-                return;
-            }
-
-            // 更新胜率显示
-            updateWinRate(calculateHandStrength(hand));
-
-            // 更新统计分析
-            updateStatistics(hand);
         }
 
         // 获取选择的牌
         function getSelectedCards() {
-            return {
+            const hand = {
                 hand: [
                     {
                         rank: document.getElementById('card1Rank').value,
@@ -1156,366 +1517,331 @@
                         suit: document.getElementById('card2Suit').value
                     }
                 ],
-                board: [
-                    {
-                        rank: document.getElementById('flop1Rank').value,
-                        suit: document.getElementById('flop1Suit').value
-                    },
-                    {
-                        rank: document.getElementById('flop2Rank').value,
-                        suit: document.getElementById('flop2Suit').value
-                    },
-                    {
-                        rank: document.getElementById('flop3Rank').value,
-                        suit: document.getElementById('flop3Suit').value
-                    },
-                    {
-                        rank: document.getElementById('turnRank').value,
-                        suit: document.getElementById('turnSuit').value
-                    },
-                    {
-                        rank: document.getElementById('riverRank').value,
-                        suit: document.getElementById('riverSuit').value
-                    }
-                ].filter(card => card.rank && card.suit) // 只保留已选择的牌
+                board: []
             };
-        }
 
-        // 验证牌的选择
-        function validateCardSelection(hand) {
-            // 检查手牌是否完整选择
-            if (!hand.hand[0].rank || !hand.hand[0].suit || 
-                !hand.hand[1].rank || !hand.hand[1].suit) {
-                return false;
-            }
+            // 获取公共牌
+            const boardCards = [
+                {rank: 'flop1Rank', suit: 'flop1Suit'},
+                {rank: 'flop2Rank', suit: 'flop2Suit'},
+                {rank: 'flop3Rank', suit: 'flop3Suit'},
+                {rank: 'turnRank', suit: 'turnSuit'},
+                {rank: 'riverRank', suit: 'riverSuit'}
+            ];
 
-            // 检查是否有重复的牌
-            const allCards = [...hand.hand, ...hand.board];
-            const cardStrings = allCards.map(card => card.rank + card.suit);
-            return new Set(cardStrings).size === cardStrings.length;
-        }
-
-        // 更新计算手牌强度的函数
-        function calculateHandStrength(hand) {
-            let strength = 0;
-            const board = hand.board;
-            
-            // 基础手牌强度
-            strength += calculateBaseHandStrength(hand.hand[0], hand.hand[1]);
-            
-            // 如果有公共牌，分析组合
-            if (board.length > 0) {
-                strength = analyzeWithBoard(hand.hand, board);
-            }
-            
-            return Math.min(Math.max(Math.round(strength), 100);
-        }
-
-        // 计算基础手牌强度
-        function calculateBaseHandStrength(card1, card2) {
-            let strength = 0;
-            
-            // 计算牌值
-            const rankValues = {
-                'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10,
-                '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2
-            };
-            
-            const rank1 = rankValues[card1.rank];
-            const rank2 = rankValues[card2.rank];
-            
-            // 口袋对
-            if (card1.rank === card2.rank) {
-                strength += 50 + (rank1 * 2);
-            }
-            // 同花
-            else if (card1.suit === card2.suit) {
-                strength += 30 + Math.max(rank1, rank2);
-            }
-            // 连牌
-            else if (Math.abs(rank1 - rank2) === 1) {
-                strength += 25 + Math.max(rank1, rank2);
-            }
-            // 高牌
-            else {
-                strength += 15 + Math.max(rank1, rank2);
-            }
-            
-            return strength;
-        }
-
-        // 分析公共牌组合
-        function analyzeWithBoard(hand, board) {
-            let strength = 0;
-            const allCards = [...hand, ...board];
-            
-            // 分析所有可能的牌型
-            const handRanking = analyzeHandRanking(allCards);
-            
-            // 根据牌型赋予强度
-            switch(handRanking.type) {
-                case 'straightFlush':
-                    strength = 100;
-                    break;
-                case 'fourOfAKind':
-                    strength = 95;
-                    break;
-                case 'fullHouse':
-                    strength = 90;
-                    break;
-                case 'flush':
-                    strength = 85;
-                    break;
-                case 'straight':
-                    strength = 80;
-                    break;
-                case 'threeOfAKind':
-                    strength = 75;
-                    break;
-                case 'twoPair':
-                    strength = 65;
-                    break;
-                case 'pair':
-                    strength = 55;
-                    break;
-                default: // 高牌
-                    strength = 40;
-            }
-            
-            // 根据公共牌数量调整强度
-            strength = adjustStrengthByBoardCount(strength, board.length);
-            
-            return strength;
-        }
-
-        // 分析牌型
-        function analyzeHandRanking(cards) {
-            // 统计每个点数的数量
-            const rankCount = {};
-            // 统计每个花色的数量
-            const suitCount = {};
-            
-            cards.forEach(card => {
-                rankCount[card.rank] = (rankCount[card.rank] || 0) + 1;
-                suitCount[card.suit] = (suitCount[card.suit] || 0) + 1;
+            boardCards.forEach(card => {
+                const rank = document.getElementById(card.rank).value;
+                const suit = document.getElementById(card.suit).value;
+                if (rank && suit) {
+                    hand.board.push({rank, suit});
+                }
             });
-            
-            // 检查同花
-            const hasFlush = Object.values(suitCount).some(count => count >= 5);
-            
-            // 检查顺子
-            const ranks = Object.keys(rankCount).map(rank => {
-                return rank === 'A' ? 14 : 
-                       rank === 'K' ? 13 : 
-                       rank === 'Q' ? 12 : 
-                       rank === 'J' ? 11 : 
-                       rank === 'T' ? 10 : 
-                       parseInt(rank);
-            }).sort((a, b) => a - b);
-            
-            const hasStraight = checkStraight(ranks);
-            
-            // 检查其他牌型
-            const pairs = Object.values(rankCount).filter(count => count === 2).length;
-            const hasThreeOfKind = Object.values(rankCount).some(count => count === 3);
-            const hasFourOfKind = Object.values(rankCount).some(count => count === 4);
-            
-            // 返回牌型
-            if (hasFlush && hasStraight) return { type: 'straightFlush' };
-            if (hasFourOfKind) return { type: 'fourOfAKind' };
-            if (hasThreeOfKind && pairs > 0) return { type: 'fullHouse' };
-            if (hasFlush) return { type: 'flush' };
-            if (hasStraight) return { type: 'straight' };
-            if (hasThreeOfKind) return { type: 'threeOfAKind' };
-            if (pairs === 2) return { type: 'twoPair' };
-            if (pairs === 1) return { type: 'pair' };
-            return { type: 'highCard' };
-        }
 
-        // 检查顺子
-        function checkStraight(ranks) {
-            for (let i = 0; i <= ranks.length - 5; i++) {
-                if (ranks[i+4] - ranks[i] === 4) return true;
-            }
-            return false;
-        }
-
-        // 根据公共牌数量调整强度
-        function adjustStrengthByBoardCount(strength, boardCount) {
-            switch(boardCount) {
-                case 3: // 翻牌
-                    return strength * 0.9;
-                case 4: // 转牌
-                    return strength * 0.95;
-                case 5: // 河牌
-                    return strength;
-                default:
-                    return strength * 0.8;
-            }
+            return hand;
         }
 
         // 更新胜率显示
-        function updateWinRate(strength) {
-            document.getElementById('mainWinRate').textContent = strength + '%';
+        function updateWinRate(equity) {
+            document.getElementById('mainWinRate').textContent = equity + '%';
             
             // 更新进度条
             const progressBars = document.querySelectorAll('.progress-fill');
-            progressBars[0].style.width = strength + '%';
-            progressBars[1].style.width = (100 - strength) + '%';
+            if (progressBars.length >= 3) {
+                progressBars[0].style.width = equity + '%';
+                progressBars[1].style.width = '0%';
+                progressBars[2].style.width = (100 - equity) + '%';
+            }
             
             // 更新建议
             const suggestion = document.getElementById('suggestion');
-            if (strength > 80) {
+            if (equity > 80) {
                 suggestion.textContent = '手牌很强，建议积极进攻';
-            } else if (strength > 60) {
+            } else if (equity > 60) {
                 suggestion.textContent = '手牌不错，可以考虑下注';
-            } else if (strength > 40) {
+            } else if (equity > 40) {
                 suggestion.textContent = '手牌一般，谨慎行动';
             } else {
                 suggestion.textContent = '手牌较弱，建议弃牌';
             }
+
+            // 更新详细统计
+            const statValues = document.querySelectorAll('.win-rate-details .stat-value');
+            if (statValues.length >= 3) {
+                statValues[0].textContent = equity + '%';
+                statValues[1].textContent = '0%';
+                statValues[2].textContent = (100 - equity) + '%';
+            }
         }
 
-        // 清空选择
-        function clearCards() {
-            const selectors = [
-                'card1Rank', 'card1Suit', 'card2Rank', 'card2Suit',
-                'flop1Rank', 'flop1Suit', 'flop2Rank', 'flop2Suit',
-                'flop3Rank', 'flop3Suit', 'turnRank', 'turnSuit',
-                'riverRank', 'riverSuit'
+        // 更新详细统计
+        function updateDetailedStats(hand) {
+            // 更新手牌分类统计
+            const stats = calculateHandStats(hand);
+            
+            // 更新各个统计值
+            Object.keys(stats).forEach(key => {
+                const bar = document.getElementById(`${key}Bar`);
+                const value = document.getElementById(`${key}Value`);
+                if (bar && value) {
+                    bar.style.width = stats[key] + '%';
+                    value.textContent = stats[key] + '%';
+                }
+            });
+        }
+
+        // 计算手牌统计
+        function calculateHandStats(hand) {
+            const stats = {
+                highCard: 0,
+                pair: 0,
+                connector: 0,
+                suited: 0,
+                straightDraw: 0,
+                flushDraw: 0
+            };
+
+            // 根据手牌和公共牌计算各种统计
+            // ... 具体计算逻辑 ...
+
+            return stats;
+        }
+
+        // 历史记录数组
+        let handHistory = [];
+
+        // 保存当前手牌到历史记录
+        function saveToHistory(hand, equity) {
+            const timestamp = new Date().toLocaleString('zh-CN');
+            const historyItem = {
+                timestamp: timestamp,
+                hand: hand,
+                equity: equity,
+                id: Date.now() // 唯一标识符
+            };
+            
+            // 添加到历史记录
+            handHistory.unshift(historyItem); // 新记录添加到开头
+            
+            // 限制历史记录数量（比如最多保存20条）
+            if (handHistory.length > 20) {
+                handHistory.pop();
+            }
+            
+            // 保存到本地存储
+            localStorage.setItem('pokerHandHistory', JSON.stringify(handHistory));
+            
+            // 更新显示
+            updateHistoryDisplay();
+        }
+
+        // 更新历史记录显示
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('historyList');
+            if (!historyList) return;
+
+            historyList.innerHTML = handHistory.map(item => `
+                <div class="history-item" data-id="${item.id}">
+                    <div class="history-header">
+                        <span class="history-time">${item.timestamp}</span>
+                        <span class="history-equity">胜率: ${item.equity}%</span>
+                    </div>
+                    <div class="history-cards">
+                        <span class="hole-cards">
+                            手牌: ${formatCard(item.hand.hand[0])} ${formatCard(item.hand.hand[1])}
+                        </span>
+                        ${item.hand.board.length > 0 ? `
+                            <span class="board-cards">
+                                公共牌: ${item.hand.board.map(formatCard).join(' ')}
+                            </span>
+                        ` : ''}
+                    </div>
+                    <div class="history-actions">
+                        <button onclick="loadHistoryHand(${item.id})">加载</button>
+                        <button onclick="deleteHistoryHand(${item.id})">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 格式化牌的显示
+        function formatCard(card) {
+            const suitSymbols = {
+                'h': '♥',
+                'd': '♦',
+                'c': '♣',
+                's': '♠'
+            };
+            return `${card.rank}${suitSymbols[card.suit]}`;
+        }
+
+        // 加载历史手牌
+        function loadHistoryHand(id) {
+            const historyItem = handHistory.find(item => item.id === id);
+            if (!historyItem) return;
+
+            // 设置手牌
+            setCardSelectors('card1', historyItem.hand.hand[0]);
+            setCardSelectors('card2', historyItem.hand.hand[1]);
+
+            // 设置公共牌
+            ['flop1', 'flop2', 'flop3', 'turn', 'river'].forEach((prefix, index) => {
+                if (historyItem.hand.board[index]) {
+                    setCardSelectors(prefix, historyItem.hand.board[index]);
+                } else {
+                    clearCardSelectors(prefix);
+                }
+            });
+
+            // 重新计算胜率
+            calculateAndUpdateEquity();
+        }
+
+        // 删除历史记录
+        function deleteHistoryHand(id) {
+            handHistory = handHistory.filter(item => item.id !== id);
+            localStorage.setItem('pokerHandHistory', JSON.stringify(handHistory));
+            updateHistoryDisplay();
+        }
+
+        // 设置牌选择器的值
+        function setCardSelectors(prefix, card) {
+            const rankSelector = document.getElementById(`${prefix}Rank`);
+            const suitSelector = document.getElementById(`${prefix}Suit`);
+            if (rankSelector && suitSelector) {
+                rankSelector.value = card.rank;
+                suitSelector.value = card.suit;
+            }
+        }
+
+        // 清空牌选择器
+        function clearCardSelectors(prefix) {
+            const rankSelector = document.getElementById(`${prefix}Rank`);
+            const suitSelector = document.getElementById(`${prefix}Suit`);
+            if (rankSelector && suitSelector) {
+                rankSelector.value = '';
+                suitSelector.value = '';
+            }
+        }
+
+        // 更新图表数据的函数
+        function updateChartWithHand(hand) {
+            if (!myChart) return;
+
+            // 根据当前手牌计算概率
+            const probabilities = calculateProbabilities(hand);
+            
+            // 更新图表数据
+            myChart.data.datasets[0].data = [
+                probabilities.highCard,
+                probabilities.pair,
+                probabilities.twoPair,
+                probabilities.threeOfAKind,
+                probabilities.straight,
+                probabilities.flush,
+                probabilities.fullHouse,
+                probabilities.fourOfAKind,
+                probabilities.straightFlush
             ];
             
-            selectors.forEach(id => {
-                document.getElementById(id).value = '';
-            });
-            
-            // 重置胜率显示
-            document.getElementById('mainWinRate').textContent = '--';
-            document.querySelectorAll('.progress-fill').forEach(bar => {
-                bar.style.width = '0%';
-            });
-            document.getElementById('suggestion').textContent = '请选择手牌';
+            myChart.update();
         }
 
-        // 更新页面加载函数
-        window.onload = function() {
-            // 保留原有的初始化代码
-            document.getElementById('potSize').addEventListener('input', function() {
-                if (this.value < 0) this.value = 0;
-            });
-            
-            document.getElementById('betSize').addEventListener('input', function() {
-                if (this.value < 0) this.value = 0;
-            });
+        // 计算牌型概率
+        function calculateProbabilities(hand) {
+            // 基础概率
+            let probs = {
+                highCard: 50,
+                pair: 42.3,
+                twoPair: 4.75,
+                threeOfAKind: 2.11,
+                straight: 0.392,
+                flush: 0.197,
+                fullHouse: 0.144,
+                fourOfAKind: 0.024,
+                straightFlush: 0.00139
+            };
 
-            // 更新时间
-            const now = new Date();
-            const timeString = now.toLocaleTimeString('zh-CN');
-            document.getElementById('updateTime').textContent = timeString;
+            if (!hand || !hand.hand || !hand.hand[0].rank) {
+                return probs;
+            }
 
-            // 初始化牌型分布图表
-            initHandTypeChart();
-
-            // 初始化牌选择器
-            initializeCardSelectors();
-
-            // 添加牌选择监听器
-            addCardSelectionListeners();
-        };
-
-        // 更新统计分析
-        function updateStatistics(hand) {
-            // 手牌分类统计
-            const handStats = analyzeHandType(hand);
-            updateStatBars(handStats);
-            
-            // 潜力分析
-            const drawStats = analyzeDraws(hand);
-            updateDrawBars(drawStats);
-            
-            // 位置价值
-            updatePositionValues(hand);
-        }
-
-        // 分析手牌类型
-        function analyzeHandType(hand) {
+            // 根据手牌调整概率
             const card1 = hand.hand[0];
             const card2 = hand.hand[1];
-            
-            return {
-                highCard: isHighCard(card1, card2),
-                pair: isPair(card1, card2),
-                connector: isConnector(card1, card2),
-                suited: isSuited(card1, card2)
-            };
-        }
 
-        // 分析成牌潜力
-        function analyzeDraws(hand) {
-            return {
-                straightDraw: calculateStraightDraw(hand),
-                flushDraw: calculateFlushDraw(hand),
-                overPair: calculateOverPair(hand)
-            };
-        }
+            // 如果是对子
+            if (card1.rank === card2.rank) {
+                probs.pair = 100;
+                probs.highCard = 0;
+                probs.twoPair *= 2;
+                probs.threeOfAKind *= 3;
+                probs.fullHouse *= 2;
+            }
 
-        // 更新统计条
-        function updateStatBars(stats) {
-            Object.keys(stats).forEach(key => {
-                const value = stats[key];
-                const bar = document.getElementById(`${key}Bar`);
-                const valueEl = document.getElementById(`${key}Value`);
-                
-                if (bar && valueEl) {
-                    bar.style.width = `${value}%`;
-                    valueEl.textContent = `${value}%`;
+            // 如果是同花
+            if (card1.suit === card2.suit) {
+                probs.flush *= 3;
+                probs.straightFlush *= 2;
+            }
+
+            // 如果是连牌
+            const ranks = 'A23456789TJQKA';
+            const gap = Math.abs(ranks.indexOf(card1.rank) - ranks.indexOf(card2.rank));
+            if (gap <= 4) {
+                probs.straight *= 2;
+                if (card1.suit === card2.suit) {
+                    probs.straightFlush *= 3;
                 }
-            });
+            }
+
+            // 如果有公共牌，进一步调整概率
+            if (hand.board && hand.board.length > 0) {
+                adjustProbabilitiesWithBoard(probs, hand);
+            }
+
+            return probs;
         }
 
-        // 更新潜力条
-        function updateDrawBars(stats) {
-            Object.keys(stats).forEach(key => {
-                const value = stats[key];
-                const bar = document.getElementById(`${key}Bar`);
-                const valueEl = document.getElementById(`${key}Value`);
-                
-                if (bar && valueEl) {
-                    bar.style.width = `${value}%`;
-                    valueEl.textContent = `${value}%`;
-                }
-            });
-        }
-
-        // 更新位置价值
-        function updatePositionValues(hand) {
-            const positions = ['btn', 'co', 'mp', 'utg'];
-            const baseValues = {btn: 85, co: 75, mp: 65, utg: 55};
+        // 根据公共牌调整概率
+        function adjustProbabilitiesWithBoard(probs, hand) {
+            const allCards = [...hand.hand, ...hand.board];
             
-            positions.forEach(pos => {
-                const valueEl = document.getElementById(`${pos}Value`);
-                if (valueEl) {
-                    const score = calculatePositionScore(hand, pos, baseValues[pos]);
-                    valueEl.querySelector('.position-score').textContent = `${score}%`;
-                }
-            });
-        }
-
-        // 在选择器变化时自动更新胜率
-        function addCardSelectionListeners() {
-            const selectors = [
-                'flop1Rank', 'flop1Suit', 'flop2Rank', 'flop2Suit',
-                'flop3Rank', 'flop3Suit', 'turnRank', 'turnSuit',
-                'riverRank', 'riverSuit'
-            ];
+            // 统计点数和花色
+            const rankCount = {};
+            const suitCount = {};
             
-            selectors.forEach(id => {
-                document.getElementById(id).addEventListener('change', () => {
-                    if (validateCardSelection(getSelectedCards())) {
-                        calculateEquity();
-                    }
-                });
+            allCards.forEach(card => {
+                rankCount[card.rank] = (rankCount[card.rank] || 0) + 1;
+                suitCount[card.suit] = (suitCount[card.suit] || 0) + 1;
             });
+
+            // 根据已有牌型调整概率
+            const maxRankCount = Math.max(...Object.values(rankCount));
+            const maxSuitCount = Math.max(...Object.values(suitCount));
+
+            // 调整对子相关概率
+            if (maxRankCount >= 2) {
+                probs.pair = 100;
+                probs.highCard = 0;
+                probs.twoPair *= 2;
+                probs.threeOfAKind *= 1.5;
+            }
+            if (maxRankCount >= 3) {
+                probs.threeOfAKind = 100;
+                probs.fullHouse *= 3;
+            }
+            if (maxRankCount >= 4) {
+                probs.fourOfAKind = 100;
+            }
+
+            // 调整同花相关概率
+            if (maxSuitCount >= 3) {
+                probs.flush *= 3;
+            }
+            if (maxSuitCount >= 4) {
+                probs.flush *= 5;
+                probs.straightFlush *= 2;
+            }
         }
     </script>
 </body>
