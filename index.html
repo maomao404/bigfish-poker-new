@@ -285,6 +285,13 @@
         }
 
         /* 牌选择器样式 */
+        .card-selector-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
         .card-selector {
             display: flex;
             align-items: center;
@@ -301,13 +308,42 @@
         }
 
         .card-selector select {
-            width: auto;
-            min-width: 60px;
             padding: 6px 12px;
-            margin: 0 4px;
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            background-color: var(--color-canvas-default);
+            color: var(--color-fg-default);
+            font-size: 14px;
+            min-width: 80px;
         }
 
-        /* 响应式布局调整 */
+        /* 公共牌样式 */
+        .community-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .card-group {
+            background: var(--color-canvas-subtle);
+            padding: 16px;
+            border-radius: 6px;
+        }
+
+        .card-group h4 {
+            margin: 0 0 12px 0;
+            color: var(--color-fg-muted);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .card-select {
+            padding: 6px 10px;
+            min-width: 70px;
+        }
+
+        /* 响应式调整 */
         @media (max-width: 768px) {
             .logo-container {
                 height: 32px;
@@ -350,13 +386,13 @@
             }
 
             .card-selector label {
-                font-size: 13px;
                 min-width: 60px;
+                font-size: 13px;
             }
 
             .card-selector select {
                 padding: 6px 8px;
-                min-width: 50px;
+                min-width: 60px;
             }
 
             .chart-wrapper {
@@ -382,6 +418,149 @@
                 color: var(--color-fg-default);
             }
         }
+
+        /* 按钮样式 */
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .primary-button {
+            background-color: var(--color-accent-fg);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .primary-button:hover {
+            background-color: var(--color-accent-emphasis);
+        }
+
+        .secondary-button {
+            background-color: var(--color-canvas-default);
+            color: var(--color-fg-default);
+            border: 1px solid var(--color-border-default);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .secondary-button:hover {
+            background-color: var(--color-canvas-subtle);
+        }
+
+        /* 禁用状态 */
+        .primary-button:disabled,
+        .secondary-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .stats-card {
+            background: var(--color-canvas-default);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            padding: 16px;
+        }
+
+        .stats-card h4 {
+            margin: 0 0 16px 0;
+            color: var(--color-fg-default);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .stats-content {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .stat-label {
+            min-width: 80px;
+            font-size: 13px;
+            color: var(--color-fg-muted);
+        }
+
+        .stat-bar-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-bar {
+            height: 8px;
+            background: var(--color-accent-fg);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .stat-value {
+            font-size: 13px;
+            color: var(--color-fg-default);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        .position-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .position-value {
+            background: var(--color-canvas-subtle);
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .position-label {
+            font-size: 13px;
+            color: var(--color-fg-muted);
+        }
+
+        .position-score {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-accent-fg);
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .position-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -394,6 +573,136 @@
             </div>
         </div>
         <h1 class="site-title">BIGFISH POKER</h1>
+    </div>
+
+    <div class="calculator-section">
+        <div class="section-header">
+            <h3>手牌选择</h3>
+        </div>
+        
+        <div class="card-selector-group">
+            <!-- 手牌选择 -->
+            <div class="card-selector">
+                <label>第一张牌</label>
+                <select id="card1Rank">
+                    <option value="">选择点数</option>
+                    <option value="A">A</option>
+                    <option value="K">K</option>
+                    <option value="Q">Q</option>
+                    <option value="J">J</option>
+                    <option value="T">10</option>
+                    <option value="9">9</option>
+                    <option value="8">8</option>
+                    <option value="7">7</option>
+                    <option value="6">6</option>
+                    <option value="5">5</option>
+                    <option value="4">4</option>
+                    <option value="3">3</option>
+                    <option value="2">2</option>
+                </select>
+                <select id="card1Suit">
+                    <option value="">选择花色</option>
+                    <option value="h">♥</option>
+                    <option value="s">♠</option>
+                    <option value="d">♦</option>
+                    <option value="c">♣</option>
+                </select>
+            </div>
+
+            <div class="card-selector">
+                <label>第二张牌</label>
+                <select id="card2Rank">
+                    <option value="">选择点数</option>
+                    <option value="A">A</option>
+                    <option value="K">K</option>
+                    <option value="Q">Q</option>
+                    <option value="J">J</option>
+                    <option value="T">10</option>
+                    <option value="9">9</option>
+                    <option value="8">8</option>
+                    <option value="7">7</option>
+                    <option value="6">6</option>
+                    <option value="5">5</option>
+                    <option value="4">4</option>
+                    <option value="3">3</option>
+                    <option value="2">2</option>
+                </select>
+                <select id="card2Suit">
+                    <option value="">选择花色</option>
+                    <option value="h">♥</option>
+                    <option value="s">♠</option>
+                    <option value="d">♦</option>
+                    <option value="c">♣</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 公共牌选择 -->
+        <div class="section-header">
+            <h3>公共牌</h3>
+        </div>
+        
+        <div class="community-cards">
+            <div class="card-group">
+                <h4>翻牌</h4>
+                <div class="card-selector">
+                    <select id="flop1Rank" class="card-select">
+                        <option value="">点数</option>
+                        <!-- 与上面相同的点数选项 -->
+                    </select>
+                    <select id="flop1Suit" class="card-select">
+                        <option value="">花色</option>
+                        <!-- 与上面相同的花色选项 -->
+                    </select>
+                </div>
+                <div class="card-selector">
+                    <select id="flop2Rank" class="card-select">
+                        <option value="">点数</option>
+                    </select>
+                    <select id="flop2Suit" class="card-select">
+                        <option value="">花色</option>
+                    </select>
+                </div>
+                <div class="card-selector">
+                    <select id="flop3Rank" class="card-select">
+                        <option value="">点数</option>
+                    </select>
+                    <select id="flop3Suit" class="card-select">
+                        <option value="">花色</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="card-group">
+                <h4>转牌</h4>
+                <div class="card-selector">
+                    <select id="turnRank" class="card-select">
+                        <option value="">点数</option>
+                    </select>
+                    <select id="turnSuit" class="card-select">
+                        <option value="">花色</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="card-group">
+                <h4>河牌</h4>
+                <div class="card-selector">
+                    <select id="riverRank" class="card-select">
+                        <option value="">点数</option>
+                    </select>
+                    <select id="riverSuit" class="card-select">
+                        <option value="">花色</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- 在公共牌选择区域后添加胜率计算按钮和结果显示 -->
+        <div class="action-buttons">
+            <button id="calculateButton" class="primary-button" onclick="calculateEquity()">计算胜率</button>
+            <button id="clearButton" class="secondary-button" onclick="clearCards()">清空选择</button>
+        </div>
     </div>
 
     <div id="result" class="result-card">
@@ -548,6 +857,100 @@
         </div>
     </div>
 
+    <div class="calculator-section">
+        <div class="section-header">
+            <h3>详细统计分析</h3>
+        </div>
+
+        <div class="stats-grid">
+            <!-- 手牌分类 -->
+            <div class="stats-card">
+                <h4>手牌分类</h4>
+                <div class="stats-content">
+                    <div class="stat-row">
+                        <span class="stat-label">高牌</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar" id="highCardBar" style="width: 0%"></div>
+                            <span class="stat-value" id="highCardValue">0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">成对</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar" id="pairBar" style="width: 0%"></div>
+                            <span class="stat-value" id="pairValue">0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">连牌</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar" id="connectorBar" style="width: 0%"></div>
+                            <span class="stat-value" id="connectorValue">0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">同花</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar" id="suitedBar" style="width: 0%"></div>
+                            <span class="stat-value" id="suitedValue">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 潜力分析 -->
+            <div class="stats-card">
+                <h4>成牌潜力</h4>
+                <div class="stats-content">
+                    <div class="stat-row">
+                        <span class="stat-label">顺子潜力</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar" id="straightDrawBar" style="width: 0%"></div>
+                            <span class="stat-value" id="straightDrawValue">0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">同花潜力</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar" id="flushDrawBar" style="width: 0%"></div>
+                            <span class="stat-value" id="flushDrawValue">0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">超对潜力</span>
+                        <div class="stat-bar-container">
+                            <div class="stat-bar" id="overPairBar" style="width: 0%"></div>
+                            <span class="stat-value" id="overPairValue">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 位置价值 -->
+            <div class="stats-card">
+                <h4>位置价值</h4>
+                <div class="position-grid">
+                    <div class="position-value" id="btnValue">
+                        <span class="position-label">BTN</span>
+                        <span class="position-score">85%</span>
+                    </div>
+                    <div class="position-value" id="coValue">
+                        <span class="position-label">CO</span>
+                        <span class="position-score">75%</span>
+                    </div>
+                    <div class="position-value" id="mpValue">
+                        <span class="position-label">MP</span>
+                        <span class="position-score">65%</span>
+                    </div>
+                    <div class="position-value" id="utgValue">
+                        <span class="position-label">UTG</span>
+                        <span class="position-score">55%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 底池赔率计算
         function calculatePotOdds() {
@@ -678,6 +1081,206 @@
             });
         }
 
+        // 初始化所有牌选择器
+        function initializeCardSelectors() {
+            const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+            const suits = [
+                {value: 'h', text: '♥'},
+                {value: 's', text: '♠'},
+                {value: 'd', text: '♦'},
+                {value: 'c', text: '♣'}
+            ];
+
+            // 所有需要初始化的选择器
+            const rankSelectors = [
+                'flop1Rank', 'flop2Rank', 'flop3Rank',
+                'turnRank', 'riverRank'
+            ];
+
+            const suitSelectors = [
+                'flop1Suit', 'flop2Suit', 'flop3Suit',
+                'turnSuit', 'riverSuit'
+            ];
+
+            // 初始化点数选择器
+            rankSelectors.forEach(id => {
+                const select = document.getElementById(id);
+                ranks.forEach(rank => {
+                    const option = document.createElement('option');
+                    option.value = rank;
+                    option.text = rank === 'T' ? '10' : rank;
+                    select.appendChild(option);
+                });
+            });
+
+            // 初始化花色选择器
+            suitSelectors.forEach(id => {
+                const select = document.getElementById(id);
+                suits.forEach(suit => {
+                    const option = document.createElement('option');
+                    option.value = suit.value;
+                    option.text = suit.text;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        // 胜率计算函数
+        function calculateEquity() {
+            // 获取所有选择的牌
+            const hand = getSelectedCards();
+            
+            // 验证选择
+            if (!validateCardSelection(hand)) {
+                alert('请选择有效的手牌');
+                return;
+            }
+
+            // 更新胜率显示
+            updateWinRate(calculateHandStrength(hand));
+
+            // 更新统计分析
+            updateStatistics(hand);
+        }
+
+        // 获取选择的牌
+        function getSelectedCards() {
+            return {
+                hand: [
+                    {
+                        rank: document.getElementById('card1Rank').value,
+                        suit: document.getElementById('card1Suit').value
+                    },
+                    {
+                        rank: document.getElementById('card2Rank').value,
+                        suit: document.getElementById('card2Suit').value
+                    }
+                ],
+                board: [
+                    {
+                        rank: document.getElementById('flop1Rank').value,
+                        suit: document.getElementById('flop1Suit').value
+                    },
+                    {
+                        rank: document.getElementById('flop2Rank').value,
+                        suit: document.getElementById('flop2Suit').value
+                    },
+                    {
+                        rank: document.getElementById('flop3Rank').value,
+                        suit: document.getElementById('flop3Suit').value
+                    },
+                    {
+                        rank: document.getElementById('turnRank').value,
+                        suit: document.getElementById('turnSuit').value
+                    },
+                    {
+                        rank: document.getElementById('riverRank').value,
+                        suit: document.getElementById('riverSuit').value
+                    }
+                ].filter(card => card.rank && card.suit) // 只保留已选择的牌
+            };
+        }
+
+        // 验证牌的选择
+        function validateCardSelection(hand) {
+            // 检查手牌是否完整选择
+            if (!hand.hand[0].rank || !hand.hand[0].suit || 
+                !hand.hand[1].rank || !hand.hand[1].suit) {
+                return false;
+            }
+
+            // 检查是否有重复的牌
+            const allCards = [...hand.hand, ...hand.board];
+            const cardStrings = allCards.map(card => card.rank + card.suit);
+            return new Set(cardStrings).size === cardStrings.length;
+        }
+
+        // 计算手牌强度
+        function calculateHandStrength(hand) {
+            // 这里是简化的手牌强度计算逻辑
+            // 实际应用中需要更复杂的算法
+            let strength = 0;
+            
+            // 根据手牌类型计算基础强度
+            if (hand.hand[0].rank === hand.hand[1].rank) {
+                // 对子
+                strength += 50;
+            } else if (hand.hand[0].suit === hand.hand[1].suit) {
+                // 同花可能
+                strength += 30;
+            }
+            
+            // 根据牌的大小调整强度
+            const rankValues = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10};
+            const rank1 = rankValues[hand.hand[0].rank] || parseInt(hand.hand[0].rank);
+            const rank2 = rankValues[hand.hand[1].rank] || parseInt(hand.hand[1].rank);
+            
+            strength += (rank1 + rank2) / 2;
+            
+            // 根据公共牌调整强度
+            if (hand.board.length > 0) {
+                // 这里添加更复杂的公共牌分析逻辑
+                strength += analyzeBoard(hand.board, hand.hand);
+            }
+            
+            // 将强度转换为百分比
+            return Math.min(Math.max(Math.round(strength), 0), 100);
+        }
+
+        // 分析公共牌
+        function analyzeBoard(board, hand) {
+            // 简化的公共牌分析
+            let bonus = 0;
+            
+            // 这里可以添加更复杂的公共牌分析逻辑
+            // 比如检查顺子可能、同花可能等
+            
+            return bonus;
+        }
+
+        // 更新胜率显示
+        function updateWinRate(strength) {
+            document.getElementById('mainWinRate').textContent = strength + '%';
+            
+            // 更新进度条
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars[0].style.width = strength + '%';
+            progressBars[1].style.width = (100 - strength) + '%';
+            
+            // 更新建议
+            const suggestion = document.getElementById('suggestion');
+            if (strength > 80) {
+                suggestion.textContent = '手牌很强，建议积极进攻';
+            } else if (strength > 60) {
+                suggestion.textContent = '手牌不错，可以考虑下注';
+            } else if (strength > 40) {
+                suggestion.textContent = '手牌一般，谨慎行动';
+            } else {
+                suggestion.textContent = '手牌较弱，建议弃牌';
+            }
+        }
+
+        // 清空选择
+        function clearCards() {
+            const selectors = [
+                'card1Rank', 'card1Suit', 'card2Rank', 'card2Suit',
+                'flop1Rank', 'flop1Suit', 'flop2Rank', 'flop2Suit',
+                'flop3Rank', 'flop3Suit', 'turnRank', 'turnSuit',
+                'riverRank', 'riverSuit'
+            ];
+            
+            selectors.forEach(id => {
+                document.getElementById(id).value = '';
+            });
+            
+            // 重置胜率显示
+            document.getElementById('mainWinRate').textContent = '--';
+            document.querySelectorAll('.progress-fill').forEach(bar => {
+                bar.style.width = '0%';
+            });
+            document.getElementById('suggestion').textContent = '请选择手牌';
+        }
+
         // 更新页面加载函数
         window.onload = function() {
             // 保留原有的初始化代码
@@ -696,7 +1299,88 @@
 
             // 初始化牌型分布图表
             initHandTypeChart();
+
+            // 初始化牌选择器
+            initializeCardSelectors();
         };
+
+        // 更新统计分析
+        function updateStatistics(hand) {
+            // 手牌分类统计
+            const handStats = analyzeHandType(hand);
+            updateStatBars(handStats);
+            
+            // 潜力分析
+            const drawStats = analyzeDraws(hand);
+            updateDrawBars(drawStats);
+            
+            // 位置价值
+            updatePositionValues(hand);
+        }
+
+        // 分析手牌类型
+        function analyzeHandType(hand) {
+            const card1 = hand.hand[0];
+            const card2 = hand.hand[1];
+            
+            return {
+                highCard: isHighCard(card1, card2),
+                pair: isPair(card1, card2),
+                connector: isConnector(card1, card2),
+                suited: isSuited(card1, card2)
+            };
+        }
+
+        // 分析成牌潜力
+        function analyzeDraws(hand) {
+            return {
+                straightDraw: calculateStraightDraw(hand),
+                flushDraw: calculateFlushDraw(hand),
+                overPair: calculateOverPair(hand)
+            };
+        }
+
+        // 更新统计条
+        function updateStatBars(stats) {
+            Object.keys(stats).forEach(key => {
+                const value = stats[key];
+                const bar = document.getElementById(`${key}Bar`);
+                const valueEl = document.getElementById(`${key}Value`);
+                
+                if (bar && valueEl) {
+                    bar.style.width = `${value}%`;
+                    valueEl.textContent = `${value}%`;
+                }
+            });
+        }
+
+        // 更新潜力条
+        function updateDrawBars(stats) {
+            Object.keys(stats).forEach(key => {
+                const value = stats[key];
+                const bar = document.getElementById(`${key}Bar`);
+                const valueEl = document.getElementById(`${key}Value`);
+                
+                if (bar && valueEl) {
+                    bar.style.width = `${value}%`;
+                    valueEl.textContent = `${value}%`;
+                }
+            });
+        }
+
+        // 更新位置价值
+        function updatePositionValues(hand) {
+            const positions = ['btn', 'co', 'mp', 'utg'];
+            const baseValues = {btn: 85, co: 75, mp: 65, utg: 55};
+            
+            positions.forEach(pos => {
+                const valueEl = document.getElementById(`${pos}Value`);
+                if (valueEl) {
+                    const score = calculatePositionScore(hand, pos, baseValues[pos]);
+                    valueEl.querySelector('.position-score').textContent = `${score}%`;
+                }
+            });
+        }
     </script>
 </body>
 </html> 
