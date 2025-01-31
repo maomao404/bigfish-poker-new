@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>BIGFISH POKER</title>
+    <style>
+        :root {
+            --color-canvas-default: #ffffff;
+            --color-canvas-subtle: #f6f8fa;
+            --color-border-default: #d0d7de;
+            --color-border-muted: #d8dee4;
+            --color-accent-fg: #0969da;
+            --color-accent-emphasis: #0969da;
+            --color-danger-fg: #cf222e;
+            --color-primer-shadow-inset: inset 0 1px 0 rgba(208,215,222,0.2);
+            --color-primer-shadow-focus: 0 0 0 3px rgba(9,105,218,0.3);
+            --color-fg-default: #24292f;
+            --color-fg-muted: #57606a;
+            --max-width-mobile: 100%;
+            --max-width-desktop: 1000px;
+            --padding-mobile: 12px;
+            --padding-desktop: 20px;
+        }
+
+        body {
+            max-width: var(--max-width-mobile);
+            padding: var(--padding-mobile);
+            margin: 0 auto;
+            font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            color: var(--color-fg-default);
+            background-color: var(--color-canvas-subtle);
+        }
+
+        /* Logo 和标题样式 */
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 16px auto;
+            height: 40px;
+        }
+
+        .fish-logo {
+            width: 32px;
+            height: 32px;
+            position: relative;
+            transform: rotate(-45deg);
+            display: inline-block;
+        }
+
+        .fish-body {
+            width: 100%;
+            height: 100%;
+            background: var(--color-accent-fg);
+            border-radius: 50% 50% 50% 0;
+            position: relative;
+            animation: swim 3s ease-in-out infinite;
+        }
+
+        .fish-tail {
+            position: absolute;
+            width: 40%;
+            height: 40%;
+            background: var(--color-accent-fg);
+            bottom: -10%;
+            right: -10%;
+            border-radius: 50% 0 50% 50%;
+            transform: rotate(45deg);
+        }
+
+        .fish-eye {
+            position: absolute;
+            width: 20%;
+            height: 20%;
+            background: white;
+            border-radius: 50%;
+            top: 30%;
+            left: 30%;
+            border: 2px solid var(--color-canvas-default);
+        }
+
+        @keyframes swim {
+            0%, 100% {
+                transform: rotate(-45deg) translateY(0);
+            }
+            50% {
+                transform: rotate(-45deg) translateY(-5px);
+            }
+        }
+
+        .site-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--color-accent-fg);
+            margin: 0;
+            padding: 0;
+            line-height: 40px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        /* 结果显示样式 */
+        .result-card {
+            background-color: var(--color-canvas-default);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--color-border-muted);
+        }
+
+        .result-title {
+            color: var(--color-fg-default);
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .win-rate {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+
+        .win-rate-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 8px solid var(--color-accent-fg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--color-accent-fg);
+            background: var(--color-canvas-subtle);
+        }
+
+        .win-rate-details {
+            flex: 1;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            border-radius: 6px;
+            background: var(--color-canvas-subtle);
+        }
+
+        .stat-label {
+            color: var(--color-fg-muted);
+            font-size: 14px;
+            margin-right: 16px;
+            min-width: 100px;
+        }
+
+        .stat-value {
+            color: var(--color-fg-default);
+            font-weight: 600;
+        }
+
+        .stat-value.positive {
+            color: var(--color-accent-fg);
+        }
+
+        .stat-value.negative {
+            color: var(--color-danger-fg);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--color-canvas-subtle);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--color-accent-fg);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* 图表容器样式 */
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+            margin: 20px auto;
+            max-width: 800px;
+        }
+
+        .chart-wrapper {
+            width: 100%;
+            max-width: 500px;
+            height: 300px;
+            margin: 0 auto;
+            padding: 16px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--color-canvas-default);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 底池赔率计算器样式 */
+        .calculator-section {
+            background-color: var(--color-canvas-default);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--color-border-muted);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-field label {
+            color: var(--color-fg-muted);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .odds-result {
+            background: var(--color-canvas-subtle);
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .odds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .odds-item {
+            background: var(--color-canvas-default);
+            border: 1px solid var(--color-border-muted);
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        /* 牌选择器样式 */
+        .card-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+            flex-wrap: nowrap;
+        }
+
+        .card-selector label {
+            white-space: nowrap;
+            font-size: 14px;
+            color: var(--color-fg-muted);
+            min-width: 70px;
+        }
+
+        .card-selector select {
+            width: auto;
+            min-width: 60px;
+            padding: 6px 12px;
+            margin: 0 4px;
+        }
+
+        /* 响应式布局调整 */
+        @media (max-width: 768px) {
+            .logo-container {
+                height: 32px;
+            }
+            
+            .fish-logo {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .site-title {
+                font-size: 1.4rem;
+                line-height: 32px;
+            }
+
+            .win-rate {
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .win-rate-circle {
+                width: 100px;
+                height: 100px;
+                font-size: 20px;
+                border-width: 6px;
+            }
+
+            .stat-item {
+                padding: 6px;
+            }
+
+            .stat-label {
+                min-width: 80px;
+                font-size: 13px;
+            }
+
+            .card-selector {
+                gap: 4px;
+            }
+
+            .card-selector label {
+                font-size: 13px;
+                min-width: 60px;
+            }
+
+            .card-selector select {
+                padding: 6px 8px;
+                min-width: 50px;
+            }
+
+            .chart-wrapper {
+                height: 250px;
+                padding: 12px;
+            }
+        }
+
+        /* 暗色模式支持 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-canvas-default: #0d1117;
+                --color-canvas-subtle: #161b22;
+                --color-border-default: #30363d;
+                --color-border-muted: #21262d;
+                --color-fg-default: #c9d1d9;
+                --color-fg-muted: #8b949e;
+                --color-accent-fg: #58a6ff;
+            }
+
+            body {
+                background-color: var(--color-canvas-default);
+                color: var(--color-fg-default);
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="logo-container">
+        <div class="fish-logo">
+            <div class="fish-body">
+                <div class="fish-eye"></div>
+                <div class="fish-tail"></div>
+            </div>
+        </div>
+        <h1 class="site-title">BIGFISH POKER</h1>
+    </div>
+
+    <div id="result" class="result-card">
+        <div class="result-header">
+            <h3 class="result-title">胜率分析结果</h3>
+            <span class="stat-value">更新时间: <span id="updateTime"></span></span>
+        </div>
+        
+        <div class="win-rate">
+            <div class="win-rate-circle">
+                <span id="mainWinRate">75%</span>
+            </div>
+            <div class="win-rate-details">
+                <div class="stat-item">
+                    <span class="stat-label">胜率</span>
+                    <div style="flex: 1;">
+                        <span class="stat-value positive">75%</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 75%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">平局概率</span>
+                    <div style="flex: 1;">
+                        <span class="stat-value">5%</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 5%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">失败概率</span>
+                    <div style="flex: 1;">
+                        <span class="stat-value negative">20%</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 20%; background: var(--color-danger-fg)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-item">
+            <span class="stat-label">建议操作</span>
+            <span class="stat-value" id="suggestion">建议跟注，当前胜率较高</span>
+        </div>
+    </div>
+
+    <div class="calculator-section">
+        <div class="section-header">
+            <h3>底池赔率计算器</h3>
+        </div>
+        
+        <div class="input-group">
+            <div class="input-field">
+                <label for="potSize">当前底池</label>
+                <input type="number" id="potSize" min="0" step="1">
+            </div>
+            <div class="input-field">
+                <label for="betSize">需要跟注</label>
+                <input type="number" id="betSize" min="0" step="1">
+            </div>
+        </div>
+        
+        <button onclick="calculatePotOdds()">计算赔率</button>
+        
+        <div id="oddsResult" class="odds-result" style="display: none;">
+            <div class="odds-grid">
+                <div class="odds-item">
+                    <div class="odds-label">底池赔率</div>
+                    <div class="odds-value" id="potOdds">--</div>
+                </div>
+                <div class="odds-item">
+                    <div class="odds-label">所需胜率</div>
+                    <div class="odds-value" id="requiredEquity">--</div>
+                </div>
+                <div class="odds-item">
+                    <div class="odds-label">投资回报率</div>
+                    <div class="odds-value" id="roi">--</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="calculator-section">
+        <div class="section-header">
+            <h3>对手范围分析</h3>
+        </div>
+        
+        <div class="input-group">
+            <div class="input-field">
+                <label for="opponentPosition">对手位置</label>
+                <select id="opponentPosition">
+                    <option value="UTG">UTG</option>
+                    <option value="MP">MP</option>
+                    <option value="CO">CO</option>
+                    <option value="BTN">BTN</option>
+                    <option value="SB">SB</option>
+                    <option value="BB">BB</option>
+                </select>
+            </div>
+            <div class="input-field">
+                <label for="opponentAction">对手行动</label>
+                <select id="opponentAction">
+                    <option value="raise">加注</option>
+                    <option value="call">跟注</option>
+                    <option value="3bet">3bet</option>
+                    <option value="4bet">4bet</option>
+                </select>
+            </div>
+            <div class="input-field">
+                <label for="analyzeStreet">分析街道</label>
+                <select id="analyzeStreet">
+                    <option value="preflop">翻牌前</option>
+                    <option value="flop">翻牌圈</option>
+                    <option value="turn">转牌</option>
+                    <option value="river">河牌</option>
+                </select>
+            </div>
+        </div>
+        
+        <button onclick="analyzeOpponentRange()">分析范围</button>
+        
+        <div id="rangeAnalysisResult" class="odds-result" style="display: none;">
+            <div class="range-summary">
+                <div class="odds-item">
+                    <div class="odds-label">预测范围强度</div>
+                    <div class="odds-value" id="rangeStrength">--</div>
+                </div>
+                <div class="odds-item">
+                    <div class="odds-label">关键牌型</div>
+                    <div class="odds-value" id="keyHands">--</div>
+                </div>
+            </div>
+            <div class="range-suggestion">
+                <h4>策略建议</h4>
+                <p id="rangeSuggestion">--</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="calculator-section">
+        <div class="section-header">
+            <h3>牌型分布统计</h3>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <canvas id="handTypeChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 底池赔率计算
+        function calculatePotOdds() {
+            const potSize = parseFloat(document.getElementById('potSize').value) || 0;
+            const betSize = parseFloat(document.getElementById('betSize').value) || 0;
+            
+            if (potSize >= 0 && betSize > 0) {
+                const odds = potSize / betSize;
+                const requiredEquity = (betSize / (potSize + betSize)) * 100;
+                const roi = (potSize / betSize) * 100;
+                
+                // 显示结果区域
+                const oddsResult = document.getElementById('oddsResult');
+                oddsResult.style.display = 'block';
+                
+                // 更新结果
+                document.getElementById('potOdds').textContent = odds.toFixed(1) + ' : 1';
+                document.getElementById('requiredEquity').textContent = requiredEquity.toFixed(1) + '%';
+                document.getElementById('roi').textContent = roi.toFixed(0) + '%';
+            }
+        }
+
+        // 对手范围分析功能
+        function analyzeOpponentRange() {
+            const position = document.getElementById('opponentPosition').value;
+            const action = document.getElementById('opponentAction').value;
+            const street = document.getElementById('analyzeStreet').value;
+            
+            // 显示结果区域
+            const rangeResult = document.getElementById('rangeAnalysisResult');
+            rangeResult.style.display = 'block';
+            
+            // 根据位置和行动获取范围强度
+            const strength = getRangeStrength(position, action);
+            const hands = getKeyHands(position, action);
+            const suggestion = getStrategySuggestion(strength, street);
+            
+            // 更新显示
+            document.getElementById('rangeStrength').textContent = strength + '%';
+            document.getElementById('keyHands').textContent = hands;
+            document.getElementById('rangeSuggestion').textContent = suggestion;
+        }
+
+        function getRangeStrength(position, action) {
+            // 简化的范围强度计算
+            const strengthMap = {
+                'UTG': { 'raise': 85, 'call': 70, '3bet': 90, '4bet': 95 },
+                'MP': { 'raise': 80, 'call': 65, '3bet': 88, '4bet': 93 },
+                'CO': { 'raise': 75, 'call': 60, '3bet': 85, '4bet': 92 },
+                'BTN': { 'raise': 70, 'call': 55, '3bet': 82, '4bet': 90 },
+                'SB': { 'raise': 65, 'call': 50, '3bet': 80, '4bet': 88 },
+                'BB': { 'raise': 60, 'call': 45, '3bet': 78, '4bet': 85 }
+            };
+            return strengthMap[position][action] || 75;
+        }
+
+        function getKeyHands(position, action) {
+            // 简化的关键牌型
+            const handsMap = {
+                'UTG': { 
+                    'raise': 'AA-TT, AK-AQ', 
+                    'call': 'JJ-99, AJ-AT', 
+                    '3bet': 'AA-QQ, AK', 
+                    '4bet': 'AA-KK, AKs' 
+                },
+                'MP': { 
+                    'raise': 'AA-99, AK-AJ', 
+                    'call': 'TT-88, AJ-AT', 
+                    '3bet': 'AA-JJ, AK-AQ', 
+                    '4bet': 'AA-QQ, AK' 
+                }
+                // ... 其他位置的牌型可以根据需要添加
+            };
+            return handsMap[position]?.[action] || 'AA-TT, AK';
+        }
+
+        function getStrategySuggestion(strength, street) {
+            if (strength > 90) {
+                return '对手范围非常强，建议谨慎行动';
+            } else if (strength > 80) {
+                return '对手范围较强，可以考虑防守性打法';
+            } else if (strength > 70) {
+                return '对手范围中等，可以尝试探测性下注';
+            } else {
+                return '对手范围较弱，可以考虑积极进攻';
+            }
+        }
+
+        // 牌型分布图表初始化
+        let handTypeChart;
+        function initHandTypeChart() {
+            const ctx = document.getElementById('handTypeChart').getContext('2d');
+            handTypeChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['高牌', '对子', '两对', '三条', '顺子', '同花', '葫芦', '四条', '同花顺'],
+                    datasets: [{
+                        data: [30, 25, 15, 10, 8, 5, 4, 2, 1],
+                        backgroundColor: [
+                            '#0969da', '#1a7f37', '#cf222e', '#bf8700',
+                            '#6639ba', '#ae2c00', '#1b7c83', '#8250df', '#57606a'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '牌型分布',
+                            font: {
+                                size: 14
+                            }
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 10,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 更新页面加载函数
+        window.onload = function() {
+            // 保留原有的初始化代码
+            document.getElementById('potSize').addEventListener('input', function() {
+                if (this.value < 0) this.value = 0;
+            });
+            
+            document.getElementById('betSize').addEventListener('input', function() {
+                if (this.value < 0) this.value = 0;
+            });
+
+            // 更新时间
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('zh-CN');
+            document.getElementById('updateTime').textContent = timeString;
+
+            // 初始化牌型分布图表
+            initHandTypeChart();
+        };
+    </script>
+</body>
+</html> 
