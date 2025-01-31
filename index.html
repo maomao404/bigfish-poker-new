@@ -1195,47 +1195,163 @@
             return new Set(cardStrings).size === cardStrings.length;
         }
 
-        // 计算手牌强度
+        // 更新计算手牌强度的函数
         function calculateHandStrength(hand) {
-            // 这里是简化的手牌强度计算逻辑
-            // 实际应用中需要更复杂的算法
             let strength = 0;
+            const board = hand.board;
             
-            // 根据手牌类型计算基础强度
-            if (hand.hand[0].rank === hand.hand[1].rank) {
-                // 对子
-                strength += 50;
-            } else if (hand.hand[0].suit === hand.hand[1].suit) {
-                // 同花可能
-                strength += 30;
+            // 基础手牌强度
+            strength += calculateBaseHandStrength(hand.hand[0], hand.hand[1]);
+            
+            // 如果有公共牌，分析组合
+            if (board.length > 0) {
+                strength = analyzeWithBoard(hand.hand, board);
             }
             
-            // 根据牌的大小调整强度
-            const rankValues = {'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10};
-            const rank1 = rankValues[hand.hand[0].rank] || parseInt(hand.hand[0].rank);
-            const rank2 = rankValues[hand.hand[1].rank] || parseInt(hand.hand[1].rank);
-            
-            strength += (rank1 + rank2) / 2;
-            
-            // 根据公共牌调整强度
-            if (hand.board.length > 0) {
-                // 这里添加更复杂的公共牌分析逻辑
-                strength += analyzeBoard(hand.board, hand.hand);
-            }
-            
-            // 将强度转换为百分比
-            return Math.min(Math.max(Math.round(strength), 0), 100);
+            return Math.min(Math.max(Math.round(strength), 100);
         }
 
-        // 分析公共牌
-        function analyzeBoard(board, hand) {
-            // 简化的公共牌分析
-            let bonus = 0;
+        // 计算基础手牌强度
+        function calculateBaseHandStrength(card1, card2) {
+            let strength = 0;
             
-            // 这里可以添加更复杂的公共牌分析逻辑
-            // 比如检查顺子可能、同花可能等
+            // 计算牌值
+            const rankValues = {
+                'A': 14, 'K': 13, 'Q': 12, 'J': 11, 'T': 10,
+                '9': 9, '8': 8, '7': 7, '6': 6, '5': 5, '4': 4, '3': 3, '2': 2
+            };
             
-            return bonus;
+            const rank1 = rankValues[card1.rank];
+            const rank2 = rankValues[card2.rank];
+            
+            // 口袋对
+            if (card1.rank === card2.rank) {
+                strength += 50 + (rank1 * 2);
+            }
+            // 同花
+            else if (card1.suit === card2.suit) {
+                strength += 30 + Math.max(rank1, rank2);
+            }
+            // 连牌
+            else if (Math.abs(rank1 - rank2) === 1) {
+                strength += 25 + Math.max(rank1, rank2);
+            }
+            // 高牌
+            else {
+                strength += 15 + Math.max(rank1, rank2);
+            }
+            
+            return strength;
+        }
+
+        // 分析公共牌组合
+        function analyzeWithBoard(hand, board) {
+            let strength = 0;
+            const allCards = [...hand, ...board];
+            
+            // 分析所有可能的牌型
+            const handRanking = analyzeHandRanking(allCards);
+            
+            // 根据牌型赋予强度
+            switch(handRanking.type) {
+                case 'straightFlush':
+                    strength = 100;
+                    break;
+                case 'fourOfAKind':
+                    strength = 95;
+                    break;
+                case 'fullHouse':
+                    strength = 90;
+                    break;
+                case 'flush':
+                    strength = 85;
+                    break;
+                case 'straight':
+                    strength = 80;
+                    break;
+                case 'threeOfAKind':
+                    strength = 75;
+                    break;
+                case 'twoPair':
+                    strength = 65;
+                    break;
+                case 'pair':
+                    strength = 55;
+                    break;
+                default: // 高牌
+                    strength = 40;
+            }
+            
+            // 根据公共牌数量调整强度
+            strength = adjustStrengthByBoardCount(strength, board.length);
+            
+            return strength;
+        }
+
+        // 分析牌型
+        function analyzeHandRanking(cards) {
+            // 统计每个点数的数量
+            const rankCount = {};
+            // 统计每个花色的数量
+            const suitCount = {};
+            
+            cards.forEach(card => {
+                rankCount[card.rank] = (rankCount[card.rank] || 0) + 1;
+                suitCount[card.suit] = (suitCount[card.suit] || 0) + 1;
+            });
+            
+            // 检查同花
+            const hasFlush = Object.values(suitCount).some(count => count >= 5);
+            
+            // 检查顺子
+            const ranks = Object.keys(rankCount).map(rank => {
+                return rank === 'A' ? 14 : 
+                       rank === 'K' ? 13 : 
+                       rank === 'Q' ? 12 : 
+                       rank === 'J' ? 11 : 
+                       rank === 'T' ? 10 : 
+                       parseInt(rank);
+            }).sort((a, b) => a - b);
+            
+            const hasStraight = checkStraight(ranks);
+            
+            // 检查其他牌型
+            const pairs = Object.values(rankCount).filter(count => count === 2).length;
+            const hasThreeOfKind = Object.values(rankCount).some(count => count === 3);
+            const hasFourOfKind = Object.values(rankCount).some(count => count === 4);
+            
+            // 返回牌型
+            if (hasFlush && hasStraight) return { type: 'straightFlush' };
+            if (hasFourOfKind) return { type: 'fourOfAKind' };
+            if (hasThreeOfKind && pairs > 0) return { type: 'fullHouse' };
+            if (hasFlush) return { type: 'flush' };
+            if (hasStraight) return { type: 'straight' };
+            if (hasThreeOfKind) return { type: 'threeOfAKind' };
+            if (pairs === 2) return { type: 'twoPair' };
+            if (pairs === 1) return { type: 'pair' };
+            return { type: 'highCard' };
+        }
+
+        // 检查顺子
+        function checkStraight(ranks) {
+            for (let i = 0; i <= ranks.length - 5; i++) {
+                if (ranks[i+4] - ranks[i] === 4) return true;
+            }
+            return false;
+        }
+
+        // 根据公共牌数量调整强度
+        function adjustStrengthByBoardCount(strength, boardCount) {
+            switch(boardCount) {
+                case 3: // 翻牌
+                    return strength * 0.9;
+                case 4: // 转牌
+                    return strength * 0.95;
+                case 5: // 河牌
+                    return strength;
+                default:
+                    return strength * 0.8;
+            }
         }
 
         // 更新胜率显示
@@ -1302,6 +1418,9 @@
 
             // 初始化牌选择器
             initializeCardSelectors();
+
+            // 添加牌选择监听器
+            addCardSelectionListeners();
         };
 
         // 更新统计分析
@@ -1379,6 +1498,23 @@
                     const score = calculatePositionScore(hand, pos, baseValues[pos]);
                     valueEl.querySelector('.position-score').textContent = `${score}%`;
                 }
+            });
+        }
+
+        // 在选择器变化时自动更新胜率
+        function addCardSelectionListeners() {
+            const selectors = [
+                'flop1Rank', 'flop1Suit', 'flop2Rank', 'flop2Suit',
+                'flop3Rank', 'flop3Suit', 'turnRank', 'turnSuit',
+                'riverRank', 'riverSuit'
+            ];
+            
+            selectors.forEach(id => {
+                document.getElementById(id).addEventListener('change', () => {
+                    if (validateCardSelection(getSelectedCards())) {
+                        calculateEquity();
+                    }
+                });
             });
         }
     </script>
