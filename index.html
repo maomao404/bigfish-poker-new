@@ -609,6 +609,13 @@
             width: 100% !important;
             height: 100% !important;
         }
+
+        #suggestion pre {
+            margin: 0;
+            white-space: pre-wrap;
+            font-family: inherit;
+            color: inherit;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -1544,33 +1551,25 @@
         function updateWinRate(equity) {
             document.getElementById('mainWinRate').textContent = equity + '%';
             
+            // 获取当前手牌分析
+            const hand = getSelectedCards();
+            const analysis = analyzeHandPossibilities(hand);
+            
+            // 更新建议区域，使用 pre 标签保持格式
+            const suggestion = document.getElementById('suggestion');
+            suggestion.innerHTML = `<pre>${analysis.suggestion}</pre>`;
+            
             // 更新进度条
             const progressBars = document.querySelectorAll('.progress-fill');
-            if (progressBars.length >= 3) {
-                progressBars[0].style.width = equity + '%';
-                progressBars[1].style.width = '0%';
-                progressBars[2].style.width = (100 - equity) + '%';
-            }
+            progressBars[0].style.width = equity + '%';
+            progressBars[1].style.width = '0%';
+            progressBars[2].style.width = (100 - equity) + '%';
             
-            // 更新建议
-            const suggestion = document.getElementById('suggestion');
-            if (equity > 80) {
-                suggestion.textContent = '手牌很强，建议积极进攻';
-            } else if (equity > 60) {
-                suggestion.textContent = '手牌不错，可以考虑下注';
-            } else if (equity > 40) {
-                suggestion.textContent = '手牌一般，谨慎行动';
-            } else {
-                suggestion.textContent = '手牌较弱，建议弃牌';
-            }
-
             // 更新详细统计
             const statValues = document.querySelectorAll('.win-rate-details .stat-value');
-            if (statValues.length >= 3) {
-                statValues[0].textContent = equity + '%';
-                statValues[1].textContent = '0%';
-                statValues[2].textContent = (100 - equity) + '%';
-            }
+            statValues[0].textContent = equity + '%';
+            statValues[1].textContent = '0%';
+            statValues[2].textContent = (100 - equity) + '%';
         }
 
         // 更新详细统计
@@ -1842,6 +1841,134 @@
                 probs.flush *= 5;
                 probs.straightFlush *= 2;
             }
+        }
+
+        // 分析当前可能的牌型
+        function analyzeHandPossibilities(hand) {
+            let analysis = {
+                currentHand: '高牌',
+                possibleHands: [],
+                suggestion: ''
+            };
+
+            // 获取所有当前牌
+            const allCards = [...hand.hand, ...hand.board];
+            
+            // 统计点数和花色
+            const rankCount = {};
+            const suitCount = {};
+            allCards.forEach(card => {
+                rankCount[card.rank] = (rankCount[card.rank] || 0) + 1;
+                suitCount[card.suit] = (suitCount[card.suit] || 0) + 1;
+            });
+
+            // 分析当前牌型
+            if (hasStraightFlush(allCards)) analysis.currentHand = '同花顺';
+            else if (hasFourOfAKind(rankCount)) analysis.currentHand = '四条';
+            else if (hasFullHouse(rankCount)) analysis.currentHand = '葫芦';
+            else if (hasFlush(suitCount)) analysis.currentHand = '同花';
+            else if (hasStraight(allCards)) analysis.currentHand = '顺子';
+            else if (hasThreeOfAKind(rankCount)) analysis.currentHand = '三条';
+            else if (hasTwoPair(rankCount)) analysis.currentHand = '两对';
+            else if (hasPair(rankCount)) analysis.currentHand = '一对';
+
+            // 分析潜在牌型
+            analysis.possibleHands = analyzePotentialHands(hand, rankCount, suitCount);
+
+            // 生成建议
+            analysis.suggestion = generateHandAdvice(analysis.currentHand, analysis.possibleHands);
+
+            return analysis;
+        }
+
+        // 分析潜在牌型
+        function analyzePotentialHands(hand, rankCount, suitCount) {
+            const possibilities = [];
+            const allCards = [...hand.hand, ...hand.board];
+
+            // 检查同花潜力
+            Object.entries(suitCount).forEach(([suit, count]) => {
+                if (count >= 4) {
+                    possibilities.push('差一张同花');
+                } else if (count === 3 && hand.board.length <= 3) {
+                    possibilities.push('同花听牌');
+                }
+            });
+
+            // 检查顺子潜力
+            const ranks = 'A23456789TJQKA';
+            const distinctRanks = [...new Set(allCards.map(c => c.rank))].sort(
+                (a, b) => ranks.indexOf(a) - ranks.indexOf(b)
+            );
+            
+            // 检查顺子差距
+            for (let i = 0; i < distinctRanks.length - 3; i++) {
+                const segment = distinctRanks.slice(i, i + 4);
+                if (segment.length === 4 && 
+                    ranks.indexOf(segment[segment.length-1]) - 
+                    ranks.indexOf(segment[0]) <= 4) {
+                    possibilities.push('顺子听牌');
+                    break;
+                }
+            }
+
+            // 检查对子升级潜力
+            if (Object.values(rankCount).includes(2)) {
+                possibilities.push('可能升级到三条');
+                if (Object.values(rankCount).filter(count => count === 2).length === 1) {
+                    possibilities.push('可能形成两对');
+                }
+            }
+
+            return possibilities;
+        }
+
+        // 生成建议
+        function generateHandAdvice(currentHand, possibilities) {
+            let advice = `当前牌型：${currentHand}\n`;
+            
+            if (possibilities.length > 0) {
+                advice += '潜在改善：\n';
+                possibilities.forEach(p => {
+                    advice += `- ${p}\n`;
+                });
+            }
+
+            // 根据牌型和潜力给出建议
+            switch (currentHand) {
+                case '同花顺':
+                case '四条':
+                    advice += '\n建议：强力加注';
+                    break;
+                case '葫芦':
+                case '同花':
+                    advice += '\n建议：可以考虑加注';
+                    break;
+                case '顺子':
+                case '三条':
+                    if (possibilities.length > 0) {
+                        advice += '\n建议：适度加注，注意潜在改善';
+                    } else {
+                        advice += '\n建议：谨慎加注';
+                    }
+                    break;
+                case '两对':
+                    if (possibilities.includes('可能升级到三条') || 
+                        possibilities.includes('同花听牌')) {
+                        advice += '\n建议：可以跟注，留意改善机会';
+                    } else {
+                        advice += '\n建议：谨慎行动';
+                    }
+                    break;
+                default:
+                    if (possibilities.length > 0) {
+                        advice += '\n建议：观察形势，等待改善';
+                    } else {
+                        advice += '\n建议：考虑弃牌';
+                    }
+            }
+
+            return advice;
         }
     </script>
 </body>
